@@ -486,7 +486,6 @@ export const NotebookPane = ({
   onSelect,
   onCreateNotebook,
   onRenameNotebook,
-  onEditNotebookAppearance,
   onDeleteNotebook,
   onMoveNotebook,
   onMoveMemos,
@@ -521,7 +520,6 @@ export const NotebookPane = ({
   onSelect: (notebookId: string) => void;
   onCreateNotebook: (parentId?: string | null) => void;
   onRenameNotebook: (notebook: Notebook) => void;
-  onEditNotebookAppearance: (notebook: Notebook) => void;
   onDeleteNotebook: (notebook: Notebook) => void;
   onMoveNotebook: (notebookId: string, targetNotebookId: string, position: NotebookDropPosition) => void;
   onMoveMemos: (memoIds: string[], targetNotebookId: string) => void;
@@ -861,7 +859,6 @@ export const NotebookPane = ({
                 onSelect={onSelect}
                 onCreateNotebook={onCreateNotebook}
                 onRenameNotebook={onRenameNotebook}
-              onEditNotebookAppearance={onEditNotebookAppearance}
                 onDeleteNotebook={onDeleteNotebook}
                 onMoveNotebook={handleMoveNotebook}
                 onMoveMemos={onMoveMemos}

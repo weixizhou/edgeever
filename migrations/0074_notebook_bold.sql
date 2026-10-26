@@ -1,2 +1,0 @@
-ALTER TABLE notebooks ADD COLUMN is_bold INTEGER NOT NULL DEFAULT 0
-  CHECK (is_bold IN (0, 1));

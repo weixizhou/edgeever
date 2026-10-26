@@ -1,4 +1,3 @@
-import type { NotebookUpdateInput } from "@edgeever/shared";
 import {
   parsePreparedAiGeneration,
   streamDirectAiGeneration,
@@ -1172,7 +1171,7 @@ export const createEdgeEverClient = (options: EdgeEverClientOptions = {}) => {
         body: JSON.stringify(payload),
       }),
 
-    updateNotebook: (notebookId: string, payload: NotebookUpdateInput) =>
+    updateNotebook: (notebookId: string, payload: { name?: string; parentId?: string | null; sortOrder?: number }) =>
       request<NotebookResponse>(`/api/v1/notebooks/${notebookId}`, {
         method: "PATCH",
         body: JSON.stringify(payload),

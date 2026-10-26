@@ -28,11 +28,6 @@ import { showEdgeEverKeyboard } from "../../modules/edgeever-keyboard";
 import { parseTags } from "../screens/workspace-utils";
 import type { MobileMemoUpdatePayload } from "../screens/workspace-memo-cache";
 import { resolveEditorCloseAction } from "./mobile-editor-close";
-import {
-  getMobileEditorSaveChrome,
-  MOBILE_EDITOR_AUTOSAVE_DELAY_MS,
-  shouldScheduleMobileEditorAutosave,
-} from "./mobile-editor-save-chrome";
 import { useMobileEditorResourceActions } from "./useMobileEditorResourceActions";
 import { useMobileEditorUploadAsset } from "./useMobileEditorUploadAsset";
 import { useMobileSelectionAi } from "./useMobileSelectionAi";
@@ -145,24 +140,23 @@ export const useMobileRichEditor = ({
   const [draftRestored, setDraftRestored] = useState(Boolean(restoredDraft));
   const [ready, setReady] = useState(alreadyReady);
   const [dirty, setDirty] = useState(Boolean(restoredDraft));
-  const [autosaveGeneration, setAutosaveGeneration] = useState(0);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resourceTarget, setResourceTarget] = useState<MobileResourceTarget | null>(null);
   const { pickUploadAssets, uploadSourcePicker } = useMobileEditorUploadAsset();
   const notebookLabel = notebooks.find((notebook) => notebook.id === notebookId)?.name ?? localizeMissingNotebookName(resolvedLocale);
-  const saveChrome = getMobileEditorSaveChrome({
-    dirty,
-    draftRestored,
-    error: Boolean(error),
-    ready,
-    saving,
-    uploading,
-  });
-  const scheduleAutosave = () => {
-    setAutosaveGeneration((current) => current + 1);
-  };
+  const saveLabel = error
+    ? "保存失败"
+    : saving
+      ? "保存中"
+      : uploading
+        ? "上传中"
+        : dirty
+          ? (draftRestored ? "本地草稿" : "未保存")
+          : ready
+            ? "已保存"
+            : "加载中";
   const titleRef = useRef(title);
   const tagsTextRef = useRef(tagsText);
   const notebookIdRef = useRef(notebookId);
@@ -249,7 +243,6 @@ export const useMobileRichEditor = ({
     contentMarkdownRef.current = docToMarkdown(contentJson);
     dirtyRef.current = true;
     setDirty(true);
-    scheduleAutosave();
     setError(null);
     flushResolverRef.current?.();
     flushResolverRef.current = null;
@@ -294,12 +287,8 @@ export const useMobileRichEditor = ({
         dirtyRef.current = false;
         setDirty(false);
       } else {
-        // Edits landed while this save was in flight. Bump the generation so
-        // the next autosave waits out another quiet period instead of firing
-        // on the stale timer that already elapsed.
         dirtyRef.current = true;
         setDirty(true);
-        scheduleAutosave();
       }
       setDraftRestored(false);
       return savedMemo;
@@ -463,26 +452,18 @@ export const useMobileRichEditor = ({
   }, [active, dirty, memo, notebookId, tagsText, title]);
 
   useEffect(() => {
-    if (!memoBaseRef.current || !shouldScheduleMobileEditorAutosave({
-      active,
-      closing: closingRef.current,
-      dirty,
-      ready,
-      saving: savingRef.current,
-      uploading: uploadingRef.current,
-    })) {
+    if (!active || !memoBaseRef.current || !dirty || !ready || savingRef.current || uploadingRef.current || closingRef.current) {
       return;
     }
     const timeout = setTimeout(() => {
       void flushEditor().then(save);
-    }, MOBILE_EDITOR_AUTOSAVE_DELAY_MS);
+    }, 1200);
     return () => clearTimeout(timeout);
-  }, [active, autosaveGeneration, dirty, memo, notebookId, ready, tagsText, title]);
+  }, [active, dirty, memo, notebookId, ready, tagsText, title]);
 
   const markDirty = () => {
     dirtyRef.current = true;
     setDirty(true);
-    scheduleAutosave();
   };
 
   return {
@@ -506,8 +487,7 @@ export const useMobileRichEditor = ({
     requestClose,
     requestSelectionAi,
     resourceTarget,
-    saveEmphasized: saveChrome.emphasized,
-    saveLabel: saveChrome.label,
+    saveLabel,
     saveResourceAs,
     saving,
     selectResource,

@@ -553,7 +553,7 @@ export const getLocalNotebook = async (scope: string, notebookId: string) => {
   return result;
 };
 
-export const updateLocalNotebook = async (scope: string, notebookId: string, input: Partial<Pick<Notebook, "name" | "parentId" | "sortOrder" | "icon" | "color" | "textColor" | "colorTarget" | "isBold" | "iconInverted" | "rowInverted">>) => {
+export const updateLocalNotebook = async (scope: string, notebookId: string, input: Partial<Pick<Notebook, "name" | "parentId" | "sortOrder">>) => {
   const notebook = await getLocalNotebook(scope, notebookId);
   if (!notebook) return null;
   const updated = { ...notebook, ...input, updatedAt: new Date().toISOString() };
